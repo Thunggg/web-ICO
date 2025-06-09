@@ -1,0 +1,24 @@
+{
+  "name": "work-shop-3-mua-ban-token",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:sepolia": "npx hardhat ignition deploy ignition/modules/DeployAll.ts --network sepolia",
+    "update-config": "npx ts-node script/config.ts",
+    "verify:sepolia": "npx ts-node ignition/modules/verify.ts",
+    "deploy-and-setup": "npm run deploy:sepolia && npm run update-config && npm run verify:sepolia"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.24.2"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-ignition": "^0.15.11",
+    "@openzeppelin/contracts": "^5.3.0",
+    "dotenv": "^16.5.0"
+  }
+}

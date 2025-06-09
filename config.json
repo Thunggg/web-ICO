@@ -1,0 +1,8 @@
+{
+  "dev": {},
+  "ethtest": {
+    "OceanToken": "0xD623677c4c53B727bb302CA3a88e09Ef5fc3bdf6",
+    "Vault": "0x65D75Df5a93929dF1A12e9EC2B0adC285775b4B0"
+  },
+  "ethmain": {}
+}
