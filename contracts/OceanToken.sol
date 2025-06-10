@@ -5,11 +5,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract OceanToken is ERC20Capped, ERC20Burnable {
+contract OceanToken is ERC20Capped, ERC20Burnable, AccessControl {
     address payable public owner;
     uint256 public constant INITIAL_SUPPLY = 70000000; // 70 million tokens
     uint256 public blockReward;
+    
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     constructor(
         uint256 cap,
@@ -18,10 +21,17 @@ contract OceanToken is ERC20Capped, ERC20Burnable {
         owner = payable(msg.sender);
         _mint(owner, INITIAL_SUPPLY * 10 ** decimals());
         blockReward = reward * 10 ** decimals();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
 
     function setBlockReward(uint256 reward) public onlyOwner {
         blockReward = reward;
+    }
+
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+        _mint(to, amount);
     }
 
     function _mintMinerReward() internal {

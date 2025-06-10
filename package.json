@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:sepolia": "npx hardhat ignition deploy ignition/modules/DeployAll.ts --network sepolia",
-    "update-config": "npx ts-node script/config.ts",
-    "verify:sepolia": "npx ts-node ignition/modules/verify.ts",
-    "deploy-and-setup": "npm run deploy:sepolia && npm run update-config && npm run verify:sepolia"
+    "deploy:ocean": "npx hardhat ignition deploy ignition/modules/deployOceanToken.ts --network sepolia",
+    "deploy:usdt": "npx hardhat ignition deploy ignition/modules/deployUSDT.ts --network sepolia",
+    "deploy:crowdsale": "npx hardhat ignition deploy ignition/modules/deployCrowdsale.ts --network sepolia",
+    "verify:ocean": "npx ts-node ignition/modules/verifyOcean.ts",
+    "verify:usdt": "npx ts-node ignition/modules/verifyUSDT.ts",
+    "verify:crowdsale": "npx ts-node ignition/modules/verifyCrowdsale.ts",
+    "update-config": "npx ts-node script/config.ts"
   },
   "author": "",
   "license": "ISC",
