@@ -1,8 +1,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { keccak256 } from "ethers";
+import config from "../../config.json";
 
 const DeployCrowdsaleModule = buildModule("DeployCrowdsaleModule", (m) => {
-    const OCEAN_TOKEN_ADDRESS = "NEW_OCEAN_TOKEN_ADDRESS"; // Thay từ config
+    const OCEAN_TOKEN_ADDRESS = config.ethtest.OceanToken;
     const oceanToken = m.contractAt("OceanToken", OCEAN_TOKEN_ADDRESS);
 
     const crowdsale = m.contract("OceanCrowdsale", [

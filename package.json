@@ -6,9 +6,9 @@
     "deploy:ocean": "npx hardhat ignition deploy ignition/modules/deployOceanToken.ts --network sepolia",
     "deploy:usdt": "npx hardhat ignition deploy ignition/modules/deployUSDT.ts --network sepolia",
     "deploy:crowdsale": "npx hardhat ignition deploy ignition/modules/deployCrowdsale.ts --network sepolia",
-    "verify:ocean": "npx ts-node ignition/modules/verifyOcean.ts",
-    "verify:usdt": "npx ts-node ignition/modules/verifyUSDT.ts",
-    "verify:crowdsale": "npx ts-node ignition/modules/verifyCrowdsale.ts",
+    "verify:ocean": "npx hardhat run ignition/modules/verifyOcean.ts --network sepolia",
+    "verify:usdt": "npx hardhat run ignition/modules/verifyUSDT.ts --network sepolia",
+    "verify:crowdsale": "npx hardhat run ignition/modules/verifyCrowdsale.ts --network sepolia",
     "update-config": "npx ts-node script/config.ts"
   },
   "author": "",

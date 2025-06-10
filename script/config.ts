@@ -24,8 +24,11 @@ if (existsSync(deployedAddressesPath)) {
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // Kiểm tra xem addresses có tồn tại không trước khi assign
-const oceanTokenAddress = deployedAddresses['DeployAllModule#OceanToken'];
+const oceanTokenAddress = deployedAddresses['DeployOceanTokenModule#OceanToken'];
 const vaultAddress = deployedAddresses['DeployAllModule#Vault'];
+const usdtAddress = deployedAddresses['DeployUSDTModule#USDT'];
+const crowdsaleAddress = deployedAddresses['DeployCrowdsaleModule#OceanCrowdsale'];
+
 
 if (!oceanTokenAddress || !vaultAddress) {
   console.error('Deployed addresses not found. Please deploy contracts first.');
@@ -35,7 +38,9 @@ if (!oceanTokenAddress || !vaultAddress) {
 
 config.ethtest = {
   OceanToken: oceanTokenAddress,
-  Vault: vaultAddress
+  Vault: vaultAddress,
+  USDT: usdtAddress,
+  Crowdsale: crowdsaleAddress
 };
 
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -43,3 +48,5 @@ console.log('Config updated successfully!');
 console.log('Updated config.json with:');
 console.log('- OceanToken:', oceanTokenAddress);
 console.log('- Vault:', vaultAddress);
+console.log('- USDT:', usdtAddress);
+console.log('- Crowdsale:', crowdsaleAddress);
