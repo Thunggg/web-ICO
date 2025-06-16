@@ -1,7 +1,16 @@
+"use client"
+
+import { ClientOnly, IconButton, Skeleton } from "@chakra-ui/react"
+import { useColorMode } from "@/components/ui/color-mode"
+import { LuMoon, LuSun } from "react-icons/lu"
+
 export default function Home() {
+  const { toggleColorMode, colorMode } = useColorMode()
   return (
-    <main>
-      <h1>Welcome to ICO Platform</h1>
-    </main>
+    <ClientOnly fallback={<Skeleton boxSize="8" />}>
+      <IconButton onClick={toggleColorMode} variant="outline" size="sm">
+        {colorMode === "light" ? <LuSun /> : <LuMoon />}
+      </IconButton>
+    </ClientOnly>
   )
-} 
+}
