@@ -47,24 +47,9 @@ const Header = () => {
                 >
                     {colorMode === "light" ? <LuMoon /> : <LuSun />}
                 </IconButton>
-                <Text
-                    cursor="pointer"
-                    fontWeight="medium"
-                    px="3"
-                    py="2"
-                    borderRadius="md"
-                    bg="button.bg"
-                    color="button.text"
-                    border="1px solid"
-                    borderColor="button.border"
-                    _hover={{
-                        bg: "button.hover",
-                        transform: "translateY(-1px)"
-                    }}
-                    transition="all 0.2s"
-                >
-                    Connect Wallet
-                </Text>
+
+                <appkit-button />
+
             </Flex>
         </Flex>
     )

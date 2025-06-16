@@ -5,6 +5,7 @@ import { Provider } from "@/components/ui/provider"
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
 import { ClientOnly, Skeleton } from "@chakra-ui/react";
+import { AppKit } from "../context/appkit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
         <Provider>
           <ClientOnly fallback={<Skeleton boxSize="8" />}>
             <Header />
-            {children}
+            <AppKit>
+              {children}
+            </AppKit>
             <Footer />
           </ClientOnly>
         </Provider>
