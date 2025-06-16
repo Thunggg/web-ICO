@@ -1,12 +1,16 @@
-'use client'
+"use client"
 
-import { ChakraProvider } from '@chakra-ui/react'
-import { system } from '@/theme' // Đường dẫn tới theme bạn đã tạo
+import { ChakraProvider } from "@chakra-ui/react"
+import {
+  ColorModeProvider,
+  type ColorModeProviderProps,
+} from "@/components/ui/color-mode"
+import { system } from "@/theme"
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Provider(props: ColorModeProviderProps) {
   return (
     <ChakraProvider value={system}>
-      {children}
+      <ColorModeProvider {...props} />
     </ChakraProvider>
   )
 }
