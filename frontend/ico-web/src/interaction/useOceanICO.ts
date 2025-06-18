@@ -14,7 +14,12 @@ export function useOceanICO() {
     const [oceanBalance, setOceanBalance] = useState<string>('0');
     const [usdtBalance, setUsdtBalance] = useState<string>('0');
     const [ethBalance, setEthBalance] = useState<string>('0');
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingStates, setLoadingStates] = useState({
+        buyingETH: false,
+        buyingUSDT: false,
+        approving: false,
+        calculating: false
+    });
 
     // Get contract instances
     const getCrowdsaleContract = useCallback(async (needsSigner = false) => {
@@ -27,14 +32,26 @@ export function useOceanICO() {
         return new Contract(CONTRACTS.CROWDSALE, CROWDSALE_ABI, provider);
     }, [provider, getSigner]);
 
-    const getTokenContract = useCallback(async (tokenAddress: string, needsSigner = false) => {
+    // Get OCEAN token contract
+    const getOceanContract = useCallback(async (needsSigner = false) => {
         if (!provider) throw new Error('Provider not available');
 
         if (needsSigner) {
             const signer = await getSigner();
-            return new Contract(tokenAddress, ERC20_ABI, signer);
+            return new Contract(CONTRACTS.OCEAN_TOKEN, OCEAN_TOKEN_ABI, signer);
         }
-        return new Contract(tokenAddress, ERC20_ABI, provider);
+        return new Contract(CONTRACTS.OCEAN_TOKEN, OCEAN_TOKEN_ABI, provider);
+    }, [provider, getSigner]);
+
+    // Get USDT token contract
+    const getUSDTContract = useCallback(async (needsSigner = false) => {
+        if (!provider) throw new Error('Provider not available');
+
+        if (needsSigner) {
+            const signer = await getSigner();
+            return new Contract(CONTRACTS.USDT, USDT_ABI, signer);
+        }
+        return new Contract(CONTRACTS.USDT, USDT_ABI, provider);
     }, [provider, getSigner]);
 
     // Fetch exchange rates from contract
@@ -59,8 +76,8 @@ export function useOceanICO() {
 
         try {
             const [oceanContract, usdtContract] = await Promise.all([
-                getTokenContract(CONTRACTS.OCEAN_TOKEN),
-                getTokenContract(CONTRACTS.USDT)
+                getOceanContract(),
+                getUSDTContract()
             ]);
 
             const [oceanBal, usdtBal, ethBal] = await Promise.all([
@@ -75,7 +92,7 @@ export function useOceanICO() {
         } catch (error) {
             console.error('Error fetching balances:', error);
         }
-    }, [address, provider, getTokenContract]);
+    }, [address, provider, getOceanContract, getUSDTContract]);
 
     // Calculate token amount for ETH
     const calculateTokensFromETH = useCallback(async (ethAmount: string): Promise<string> => {
@@ -120,7 +137,7 @@ export function useOceanICO() {
         }
 
         try {
-            setIsLoading(true);
+            setLoadingStates(prev => ({ ...prev, buyingETH: true }));
             const contract = await getCrowdsaleContract(true);
             const ethInWei = ethers.utils.parseEther(ethAmount);
 
@@ -135,15 +152,19 @@ export function useOceanICO() {
 
             const receipt = await tx.wait();
 
-            toaster.create({
-                title: "Purchase successful!",
-                description: `You bought OCEAN tokens with ${ethAmount} ETH`,
-                type: "success",
-                duration: 5000,
-            });
+            if (receipt.status === 1) {
+                toaster.create({
+                    title: "Purchase successful!",
+                    description: `You bought OCEAN tokens with ${ethAmount} ETH`,
+                    type: "success",
+                    duration: 5000,
+                });
 
-            // Refresh balances
-            await fetchBalances();
+                // Refresh balances
+                await fetchBalances();
+            } else {
+                throw new Error('Transaction failed');
+            }
 
         } catch (error: any) {
             console.error('Error buying with ETH:', error);
@@ -154,7 +175,7 @@ export function useOceanICO() {
                 duration: 5000,
             });
         } finally {
-            setIsLoading(false);
+            setLoadingStates(prev => ({ ...prev, buyingETH: false }));
         }
     }, [isConnected, address, getCrowdsaleContract, fetchBalances]);
 
@@ -171,8 +192,8 @@ export function useOceanICO() {
         }
 
         try {
-            setIsLoading(true);
-            const usdtContract = await getTokenContract(CONTRACTS.USDT, true);
+            setLoadingStates(prev => ({ ...prev, buyingUSDT: true }));
+            const usdtContract = await getUSDTContract(true);
             const crowdsaleContract = await getCrowdsaleContract(true);
             const usdtInWei = ethers.utils.parseUnits(usdtAmount, 18);
 
@@ -180,46 +201,53 @@ export function useOceanICO() {
             const allowance = await usdtContract.allowance(address, CONTRACTS.CROWDSALE);
 
             if (allowance.lt(usdtInWei)) {
-                // Need to approve first
-                toaster.create({
-                    title: "Approving USDT...",
-                    description: "Please approve USDT spending first",
-                    type: "info",
-                    duration: 5000,
-                });
+                setLoadingStates(prev => ({ ...prev, approving: true }));
 
-                const approveTx = await usdtContract.approve(CONTRACTS.CROWDSALE, usdtInWei);
-                await approveTx.wait();
+                try {
+                    const approveTx = await usdtContract.approve(CONTRACTS.CROWDSALE, usdtInWei);
+                    const approveReceipt = await approveTx.wait();
 
-                toaster.create({
-                    title: "USDT approved",
-                    description: "Now proceeding with purchase...",
-                    type: "success",
-                    duration: 3000,
-                });
+                    if (approveReceipt.status !== 1) {
+                        throw new Error(`USDT approval failed. Transaction hash: ${approveReceipt.transactionHash}`);
+                    }
+
+                    toaster.create({
+                        title: "USDT approved",
+                        description: "Now proceeding with purchase...",
+                        type: "success",
+                        duration: 3000,
+                    });
+                } finally {
+                    setLoadingStates(prev => ({ ...prev, approving: false }));
+                }
             }
 
-            // Buy tokens
-            const tx = await crowdsaleContract.buyTokenByUSDT(usdtInWei);
+            // Estimate gas first
+            const gasEstimate = await crowdsaleContract.estimateGas.buyTokenByUSDT(usdtInWei);
 
-            toaster.create({
-                title: "Transaction sent",
-                description: "Please wait for confirmation...",
-                type: "info",
-                duration: 5000,
+            const tx = await crowdsaleContract.buyTokenByUSDT(usdtInWei, {
+                gasLimit: gasEstimate.mul(120).div(100) // +20% buffer
             });
 
-            const receipt = await tx.wait();
+            // Wait with timeout
+            const receipt = await Promise.race([
+                tx.wait(),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Transaction timeout after 5 minutes')), 300000)
+                )
+            ]);
 
-            toaster.create({
-                title: "Purchase successful!",
-                description: `You bought OCEAN tokens with ${usdtAmount} USDT`,
-                type: "success",
-                duration: 5000,
-            });
-
-            // Refresh balances
-            await fetchBalances();
+            if (receipt.status === 1) {
+                toaster.create({
+                    title: "Purchase successful!",
+                    description: `Transaction hash: ${receipt.transactionHash}`,
+                    type: "success",
+                    duration: 5000,
+                });
+                await fetchBalances();
+            } else {
+                throw new Error(`Transaction failed. Hash: ${receipt.transactionHash}`);
+            }
 
         } catch (error: any) {
             console.error('Error buying with USDT:', error);
@@ -230,9 +258,9 @@ export function useOceanICO() {
                 duration: 5000,
             });
         } finally {
-            setIsLoading(false);
+            setLoadingStates(prev => ({ ...prev, buyingUSDT: false }));
         }
-    }, [isConnected, address, getTokenContract, getCrowdsaleContract, fetchBalances]);
+    }, [isConnected, address, getUSDTContract, getCrowdsaleContract, fetchBalances]);
 
     // Initialize data when connected
     useEffect(() => {
@@ -249,7 +277,7 @@ export function useOceanICO() {
         oceanBalance,
         usdtBalance,
         ethBalance,
-        isLoading,
+        loadingStates,
         isConnected,
 
         // Functions
